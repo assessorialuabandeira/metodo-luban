@@ -1,0 +1,457 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Método Luban — Cadastro de Alunos</title>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;600&family=DM+Sans:wght@400;500&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: #f2f0eb; font-family: 'DM Sans', sans-serif; padding: 2rem 1rem 4rem; min-height: 100vh; }
+    .lb-wrap { max-width: 700px; margin: 0 auto; }
+
+    .lb-header { background: #F47B20; border-radius: 16px; padding: 2rem 2.5rem; margin-bottom: 1.5rem; position: relative; overflow: hidden; }
+    .lb-header::before { content: ''; position: absolute; top: -30px; right: -30px; width: 140px; height: 140px; border-radius: 50%; background: rgba(26,17,0,0.12); }
+    .lb-header::after { content: ''; position: absolute; bottom: -20px; right: 70px; width: 80px; height: 80px; border-radius: 50%; background: rgba(26,17,0,0.07); }
+    .lb-badge { display: inline-block; background: #1a1100; color: #F47B20; font-size: 10px; font-weight: 500; letter-spacing: 1.5px; text-transform: uppercase; padding: 4px 12px; border-radius: 20px; margin-bottom: 12px; }
+    .lb-title { font-family: 'Playfair Display', serif; font-size: 30px; font-weight: 600; color: #1a1100; margin-bottom: 4px; }
+    .lb-sub { font-size: 13px; color: rgba(26,17,0,0.6); line-height: 1.5; }
+
+    .lb-section { background: #fff; border: 1px solid #e8e4dc; border-radius: 16px; padding: 1.5rem; margin-bottom: 1rem; }
+    .lb-section-title { font-size: 11px; font-weight: 500; letter-spacing: 1.4px; text-transform: uppercase; color: #F47B20; margin-bottom: 1.25rem; }
+
+    .lb-field { margin-bottom: 1rem; }
+    .lb-field:last-child { margin-bottom: 0; }
+    .lb-label { display: block; font-size: 13px; font-weight: 500; color: #555; margin-bottom: 6px; }
+    .lb-label span { color: #F47B20; margin-left: 2px; }
+
+    .lb-input, .lb-select {
+      width: 100%; background: #f8f7f4; border: 1px solid #e0dbd0;
+      border-radius: 8px; padding: 10px 13px; font-family: 'DM Sans', sans-serif;
+      font-size: 14px; color: #1a1100; transition: border-color 0.15s; outline: none;
+    }
+    .lb-input:focus, .lb-select:focus { border-color: #F47B20; background: #fff; }
+    .lb-input.error, .lb-select.error { border-color: #c0392b; }
+    .lb-select { appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23888' d='M6 8L1 3h10z'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 13px center; background-color: #f8f7f4; padding-right: 34px; }
+    .lb-select:focus { background-color: #fff; }
+
+    .lb-grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .lb-grid3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; }
+    .lb-addr-row { display: grid; grid-template-columns: 160px 1fr 80px; gap: 12px; }
+    @media (max-width: 560px) {
+      .lb-grid2, .lb-grid3 { grid-template-columns: 1fr; }
+      .lb-addr-row { grid-template-columns: 1fr 1fr; }
+      .lb-addr-row .lb-select { grid-column: 1 / -1; }
+    }
+
+    .lb-radio-group { display: flex; gap: 10px; flex-wrap: wrap; }
+    .lb-radio-label { display: flex; align-items: center; gap: 8px; font-size: 14px; color: #333; cursor: pointer; padding: 9px 15px; border: 1px solid #e0dbd0; border-radius: 8px; background: #f8f7f4; transition: border-color 0.15s, background 0.15s; }
+    .lb-radio-label:hover { border-color: #F47B20; }
+    .lb-radio-label input { accent-color: #F47B20; width: 15px; height: 15px; }
+
+    .lb-check-group { display: flex; flex-direction: column; gap: 8px; }
+    .lb-check-label { display: flex; align-items: center; gap: 9px; font-size: 14px; color: #333; cursor: pointer; padding: 9px 15px; border: 1px solid #e0dbd0; border-radius: 8px; background: #f8f7f4; transition: border-color 0.15s; }
+    .lb-check-label:hover { border-color: #F47B20; }
+    .lb-check-label input { accent-color: #F47B20; width: 15px; height: 15px; flex-shrink: 0; }
+
+    .lb-error-msg { font-size: 12px; color: #c0392b; margin-top: 5px; display: none; }
+    .lb-error-msg.visible { display: block; }
+    .lb-hint { font-size: 12px; color: #888; margin-top: 5px; }
+
+    #sinal-fields { display: none; margin-top: 1rem; padding-top: 1rem; border-top: 1px solid #e8e4dc; }
+    #sinal-fields.visible { display: block; }
+    #instagram-field { display: none; margin-top: 0.75rem; }
+    #instagram-field.visible { display: block; }
+    #outro-field { display: none; margin-top: 0.75rem; }
+    #outro-field.visible { display: block; }
+    #indicacoes-fields { display: none; margin-top: 1rem; }
+    #indicacoes-fields.visible { display: block; }
+
+    .indc-banner { background: rgba(244,123,32,0.08); border: 1px solid rgba(244,123,32,0.25); border-radius: 8px; padding: 10px 14px; font-size: 13px; color: #666; margin-bottom: 1rem; line-height: 1.5; }
+    .indc-banner strong { color: #F47B20; }
+
+    .indicacao-item { display: grid; grid-template-columns: 1fr 1fr 36px; gap: 10px; align-items: end; margin-bottom: 10px; padding: 12px; background: #f8f7f4; border: 1px solid #e0dbd0; border-radius: 10px; }
+    .indicacao-num { font-size: 11px; font-weight: 500; color: #F47B20; letter-spacing: 0.5px; margin-bottom: 6px; grid-column: 1 / -1; }
+
+    .btn-remove { background: none; border: 1px solid #e0dbd0; border-radius: 8px; width: 36px; height: 40px; cursor: pointer; color: #aaa; font-size: 18px; display: flex; align-items: center; justify-content: center; transition: border-color 0.15s, color 0.15s; }
+    .btn-remove:hover { border-color: #c0392b; color: #c0392b; }
+
+    .btn-add { display: inline-flex; align-items: center; gap: 8px; background: none; border: 1.5px dashed #F47B20; border-radius: 8px; padding: 10px 18px; font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 500; color: #F47B20; cursor: pointer; margin-top: 4px; transition: background 0.15s; }
+    .btn-add:hover { background: rgba(244,123,32,0.07); }
+
+    .lb-btn { width: 100%; background: #F47B20; color: #1a1100; border: none; border-radius: 10px; padding: 15px; font-family: 'DM Sans', sans-serif; font-size: 16px; font-weight: 500; cursor: pointer; margin-top: 0.5rem; transition: background 0.15s, transform 0.1s; }
+    .lb-btn:hover { background: #d96a10; }
+    .lb-btn:active { transform: scale(0.99); }
+    .lb-btn:disabled { background: #ccc; cursor: not-allowed; }
+
+    .lb-sending { display: none; text-align: center; font-size: 14px; color: #888; margin-top: 1rem; }
+    .lb-sending.visible { display: block; }
+
+    .lb-success { display: none; background: #e8f5e9; border: 1px solid #a5d6a7; border-radius: 12px; padding: 1.25rem; text-align: center; font-size: 15px; color: #2e7d32; margin-top: 1rem; line-height: 1.6; }
+    .lb-success.visible { display: block; }
+  </style>
+</head>
+<body>
+<div class="lb-wrap">
+
+  <div class="lb-header">
+    <div class="lb-badge">Cadastro de aluno</div>
+    <p class="lb-title">Método Luban</p>
+    <p class="lb-sub">Multiplique seus ganhos com serviços extras e técnicas de vendas</p>
+  </div>
+
+  <!-- Dados pessoais -->
+  <div class="lb-section">
+    <p class="lb-section-title">Dados pessoais</p>
+    <div class="lb-field">
+      <label class="lb-label">Nome completo <span>*</span></label>
+      <input class="lb-input" id="nome" type="text" placeholder="Seu nome completo" />
+      <p class="lb-error-msg" id="err-nome">Preencha o nome completo.</p>
+    </div>
+    <div class="lb-grid2">
+      <div class="lb-field">
+        <label class="lb-label">CPF <span>*</span></label>
+        <input class="lb-input" id="cpf" type="text" placeholder="000.000.000-00" maxlength="14" />
+        <p class="lb-error-msg" id="err-cpf">Preencha o CPF.</p>
+      </div>
+            <div class="lb-field">
+        <label class="lb-label">Data de nascimento <span>*</span></label>
+        <input class="lb-input" id="nasc" type="date" />
+        <p class="lb-error-msg" id="err-nasc">Preencha a data de nascimento.</p>
+      </div>
+    </div>
+    <div class="lb-field">
+      <label class="lb-label">Logradouro e endereço <span>*</span></label>
+      <div class="lb-addr-row">
+        <select class="lb-select" id="tipo-logradouro">
+          <option value="">Tipo</option>
+          <option>Rua</option><option>Avenida</option><option>Travessa</option>
+          <option>Alameda</option><option>Estrada</option><option>Rodovia</option>
+          <option>Viela</option><option>Praça</option><option>Largo</option><option>Outro</option>
+        </select>
+        <input class="lb-input" id="logradouro" type="text" placeholder="Nome do logradouro" />
+        <input class="lb-input" id="numero" type="text" placeholder="Nº" />
+      </div>
+      <p class="lb-error-msg" id="err-logradouro">Preencha o tipo, nome e número do logradouro.</p>
+    </div>
+    <div class="lb-grid2">
+      <div class="lb-field">
+        <label class="lb-label">Complemento</label>
+        <input class="lb-input" id="complemento" type="text" placeholder="Apto, bloco, casa..." />
+        <p class="lb-hint">Opcional</p>
+      </div>
+      <div class="lb-field">
+        <label class="lb-label">CEP <span>*</span></label>
+        <input class="lb-input" id="cep" type="text" placeholder="00000-000" maxlength="9" />
+        <p class="lb-error-msg" id="err-cep">Preencha o CEP.</p>
+      </div>
+    </div>
+    <div class="lb-grid3">
+      <div class="lb-field">
+        <label class="lb-label">Bairro <span>*</span></label>
+        <input class="lb-input" id="bairro" type="text" placeholder="Bairro" />
+        <p class="lb-error-msg" id="err-bairro">Preencha o bairro.</p>
+      </div>
+      <div class="lb-field">
+        <label class="lb-label">Cidade <span>*</span></label>
+        <input class="lb-input" id="cidade" type="text" placeholder="Cidade" />
+        <p class="lb-error-msg" id="err-cidade">Preencha a cidade.</p>
+      </div>
+      <div class="lb-field">
+        <label class="lb-label">Estado <span>*</span></label>
+        <select class="lb-select" id="estado">
+          <option value="">UF</option>
+          <option>AC</option><option>AL</option><option>AP</option><option>AM</option>
+          <option>BA</option><option>CE</option><option>DF</option><option>ES</option>
+          <option>GO</option><option>MA</option><option>MT</option><option>MS</option>
+          <option>MG</option><option>PA</option><option>PB</option><option>PR</option>
+          <option>PE</option><option>PI</option><option>RJ</option><option>RN</option>
+          <option>RS</option><option>RO</option><option>RR</option><option>SC</option>
+          <option>SP</option><option>SE</option><option>TO</option>
+        </select>
+        <p class="lb-error-msg" id="err-estado">Selecione o estado.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Contato -->
+  <div class="lb-section">
+    <p class="lb-section-title">Contato</p>
+    <div class="lb-grid2">
+      <div class="lb-field">
+        <label class="lb-label">E-mail <span>*</span></label>
+        <input class="lb-input" id="email" type="email" placeholder="seu@email.com" />
+        <p class="lb-error-msg" id="err-email">Preencha o e-mail.</p>
+      </div>
+      <div class="lb-field">
+        <label class="lb-label">Telefone / WhatsApp <span>*</span></label>
+        <input class="lb-input" id="tel" type="tel" placeholder="(00) 90000-0000" maxlength="15" />
+        <p class="lb-error-msg" id="err-tel">Preencha o telefone.</p>
+      </div>
+    </div>
+    <div class="lb-field">
+      <label class="lb-label">Possui Instagram? <span>*</span></label>
+      <div class="lb-radio-group">
+        <label class="lb-radio-label"><input type="radio" name="tem-insta" value="sim" onchange="toggleInsta(this)" /> Sim</label>
+        <label class="lb-radio-label"><input type="radio" name="tem-insta" value="nao" onchange="toggleInsta(this)" /> Não</label>
+      </div>
+      <p class="lb-error-msg" id="err-tem-insta">Selecione uma opção.</p>
+      <div id="instagram-field">
+        <input class="lb-input" id="instagram" type="text" placeholder="@seuinstagram" style="margin-top:0.5rem" />
+        <p class="lb-error-msg" id="err-instagram">Preencha o Instagram.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Pagamento -->
+  <div class="lb-section">
+    <p class="lb-section-title">Pagamento</p>
+    <div class="lb-field">
+      <label class="lb-label">Você já enviou o valor do sinal? <span>*</span></label>
+      <div class="lb-radio-group">
+        <label class="lb-radio-label"><input type="radio" name="sinal" value="sim" onchange="toggleSinal(this)" /> Sim, já enviei</label>
+        <label class="lb-radio-label"><input type="radio" name="sinal" value="nao" onchange="toggleSinal(this)" /> Ainda não</label>
+      </div>
+      <p class="lb-error-msg" id="err-sinal">Selecione uma opção.</p>
+    </div>
+    <div id="sinal-fields">
+      <div class="lb-field">
+        <label class="lb-label">Em nome de quem foi enviado o sinal? <span>*</span></label>
+        <input class="lb-input" id="nome-sinal" type="text" placeholder="Nome completo de quem fez o envio" />
+        <p class="lb-error-msg" id="err-nome-sinal">Preencha o nome de quem enviou o sinal.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Como nos conheceu -->
+  <div class="lb-section">
+    <p class="lb-section-title">Como nos conheceu</p>
+    <div class="lb-field">
+      <label class="lb-label">Como você ficou sabendo do Método Luban? <span>*</span></label>
+      <div class="lb-check-group">
+        <label class="lb-check-label"><input type="checkbox" name="conheceu" value="Indicação de amigos" onchange="checkConheceu()" /> Indicação de amigos</label>
+        <label class="lb-check-label"><input type="checkbox" name="conheceu" value="Colegas de trabalho" onchange="checkConheceu()" /> Colegas de trabalho</label>
+        <label class="lb-check-label"><input type="checkbox" name="conheceu" value="Instagram" onchange="checkConheceu()" /> Instagram</label>
+        <label class="lb-check-label"><input type="checkbox" name="conheceu" value="Facebook" onchange="checkConheceu()" /> Facebook</label>
+        <label class="lb-check-label"><input type="checkbox" name="conheceu" value="YouTube" onchange="checkConheceu()" /> YouTube</label>
+        <label class="lb-check-label"><input type="checkbox" name="conheceu" value="Google" onchange="checkConheceu()" /> Google / pesquisa na internet</label>
+        <label class="lb-check-label"><input type="checkbox" name="conheceu" value="Outro" onchange="checkConheceu();toggleOutro(this)" /> Outro</label>
+      </div>
+      <p class="lb-error-msg" id="err-conheceu">Selecione pelo menos uma opção.</p>
+      <div id="outro-field">
+        <input class="lb-input" id="outro-texto" type="text" placeholder="Como nos conheceu?" style="margin-top:0.5rem" />
+        <p class="lb-error-msg" id="err-outro">Descreva como nos conheceu.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Indicações -->
+  <div class="lb-section">
+    <p class="lb-section-title">Indicações</p>
+    <div class="lb-field">
+      <label class="lb-label">Gostaria de indicar algum amigo para evoluir junto? <span>*</span></label>
+      <p class="lb-hint" style="margin-bottom:10px">Indicar amigos te garante <strong style="color:#F47B20">descontos exclusivos!</strong></p>
+      <div class="lb-radio-group">
+        <label class="lb-radio-label"><input type="radio" name="quer-indicar" value="sim" onchange="toggleIndicacoes(this)" /> Sim, quero indicar</label>
+        <label class="lb-radio-label"><input type="radio" name="quer-indicar" value="nao" onchange="toggleIndicacoes(this)" /> Não, obrigado</label>
+      </div>
+      <p class="lb-error-msg" id="err-quer-indicar">Selecione uma opção.</p>
+    </div>
+    <div id="indicacoes-fields">
+      <div class="indc-banner">Adicione quantos amigos quiser! Cada indicação <strong>aumenta seus benefícios</strong>.</div>
+      <div id="lista-indicacoes"></div>
+      <button class="btn-add" type="button" onclick="addIndicacao()">+ Indicar mais um amigo</button>
+      <p class="lb-error-msg" id="err-indicacoes">Preencha nome e telefone de todos os amigos indicados.</p>
+    </div>
+  </div>
+
+  <button class="lb-btn" id="btn-enviar" type="button" onclick="submitForm()">Enviar cadastro</button>
+  <p class="lb-sending" id="sending-msg">⏳ Enviando seus dados... aguarde.</p>
+  <div class="lb-success" id="success-msg">
+    ✓ Cadastro enviado com sucesso!<br>
+    <span style="font-size:13px;opacity:0.8">Em breve entraremos em contato. Obrigado!</span>
+  </div>
+</div>
+
+<script>
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzxF1RTQR9s7DJpcCrzxhcxVchORurWk07Pg-fqUBUsV7aJUoSb_8LP8zqhap6ejd8Ctg/exec";
+let instaObrigatorio=false, sinalEnviado=false, indicacaoAtiva=false, indicacaoCount=0;
+
+function toggleInsta(el){
+  const f=document.getElementById('instagram-field'), i=document.getElementById('instagram');
+  if(el.value==='sim'){f.classList.add('visible');instaObrigatorio=true;}
+  else{f.classList.remove('visible');i.value='';instaObrigatorio=false;i.classList.remove('error');hide('err-instagram');}
+  hide('err-tem-insta');
+}
+function toggleSinal(el){
+  sinalEnviado=el.value==='sim';
+  const b=document.getElementById('sinal-fields');
+  if(sinalEnviado)b.classList.add('visible');
+  else{b.classList.remove('visible');v('nome-sinal','');cls('nome-sinal');hide('err-nome-sinal');}
+  hide('err-sinal');
+}
+function checkConheceu(){
+  if(document.querySelectorAll('input[name="conheceu"]:checked').length>0) hide('err-conheceu');
+}
+function toggleOutro(el){
+  const f=document.getElementById('outro-field'), i=document.getElementById('outro-texto');
+  if(el.checked)f.classList.add('visible');
+  else{f.classList.remove('visible');i.value='';i.classList.remove('error');hide('err-outro');}
+}
+function toggleIndicacoes(el){
+  indicacaoAtiva=el.value==='sim';
+  const b=document.getElementById('indicacoes-fields');
+  hide('err-quer-indicar');
+  if(indicacaoAtiva){b.classList.add('visible');if(indicacaoCount===0)addIndicacao();}
+  else{b.classList.remove('visible');document.getElementById('lista-indicacoes').innerHTML='';indicacaoCount=0;}
+}
+function addIndicacao(){
+  indicacaoCount++;
+  const id=indicacaoCount, lista=document.getElementById('lista-indicacoes');
+  const div=document.createElement('div');
+  div.className='indicacao-item'; div.id='ind-'+id;
+  div.innerHTML=`<p class="indicacao-num">Amigo ${id}</p>
+    <div><input class="lb-input" type="text" id="in-nome-${id}" placeholder="Nome completo" /></div>
+    <div><input class="lb-input" type="tel" id="in-tel-${id}" placeholder="(00) 90000-0000" maxlength="15" oninput="mT(this)" /></div>
+    <button class="btn-remove" type="button" onclick="remInd(${id})">×</button>`;
+  lista.appendChild(div);
+  hide('err-indicacoes');
+}
+function remInd(id){
+  const el=document.getElementById('ind-'+id); if(el)el.remove();
+  document.querySelectorAll('.indicacao-item').forEach((item,i)=>{
+    const p=item.querySelector('.indicacao-num'); if(p)p.textContent='Amigo '+(i+1);
+  });
+}
+function mT(el){
+  let v=el.value.replace(/\D/g,'').slice(0,11);
+  v=v.length<=10?v.replace(/(\d{2})(\d{4})(\d{0,4})/,'($1) $2-$3'):v.replace(/(\d{2})(\d{5})(\d{0,4})/,'($1) $2-$3');
+  el.value=v.trim().replace(/-$/,'');
+}
+function v(id,val){document.getElementById(id).value=val;}
+function cls(id){document.getElementById(id).classList.remove('error');}
+function hide(id){document.getElementById(id).classList.remove('visible');}
+function show(id){document.getElementById(id).classList.add('visible');}
+
+function chk(id,errId,cond){
+  const el=document.getElementById(id), err=document.getElementById(errId);
+  if(cond){el.classList.remove('error');err.classList.remove('visible');return true;}
+  else{el.classList.add('error');err.classList.add('visible');return false;}
+}
+
+async function submitForm(){
+  let ok=true;
+  ok=chk('nome','err-nome',document.getElementById('nome').value.trim()!=='')&&ok;
+  ok=chk('cpf','err-cpf',document.getElementById('cpf').value.replace(/\D/g,'').length===11)&&ok;
+  ok=chk('nasc','err-nasc',document.getElementById('nasc').value!=='')&&ok;
+
+  const tOk=document.getElementById('tipo-logradouro').value!=='';
+  const lOk=document.getElementById('logradouro').value.trim()!=='';
+  const nOk=document.getElementById('numero').value.trim()!=='';
+  if(!(tOk&&lOk&&nOk)){
+    show('err-logradouro');
+    if(!tOk)document.getElementById('tipo-logradouro').classList.add('error');
+    if(!lOk)document.getElementById('logradouro').classList.add('error');
+    if(!nOk)document.getElementById('numero').classList.add('error');
+    ok=false;
+  } else {
+    hide('err-logradouro');
+    ['tipo-logradouro','logradouro','numero'].forEach(id=>document.getElementById(id).classList.remove('error'));
+  }
+
+  ok=chk('cep','err-cep',document.getElementById('cep').value.replace(/\D/g,'').length===8)&&ok;
+  ok=chk('bairro','err-bairro',document.getElementById('bairro').value.trim()!=='')&&ok;
+  ok=chk('cidade','err-cidade',document.getElementById('cidade').value.trim()!=='')&&ok;
+  ok=chk('estado','err-estado',document.getElementById('estado').value!=='')&&ok;
+  ok=chk('email','err-email',document.getElementById('email').value.trim()!=='')&&ok;
+  ok=chk('tel','err-tel',document.getElementById('tel').value.replace(/\D/g,'').length>=10)&&ok;
+
+  if(!document.querySelector('input[name="tem-insta"]:checked')){show('err-tem-insta');ok=false;}
+  if(instaObrigatorio) ok=chk('instagram','err-instagram',document.getElementById('instagram').value.trim()!=='')&&ok;
+  if(!document.querySelector('input[name="sinal"]:checked')){show('err-sinal');ok=false;}
+  if(sinalEnviado) ok=chk('nome-sinal','err-nome-sinal',document.getElementById('nome-sinal').value.trim()!=='')&&ok;
+  if(document.querySelectorAll('input[name="conheceu"]:checked').length===0){show('err-conheceu');ok=false;}
+  if(document.querySelector('input[name="conheceu"][value="Outro"]:checked'))
+    ok=chk('outro-texto','err-outro',document.getElementById('outro-texto').value.trim()!=='')&&ok;
+  if(!document.querySelector('input[name="quer-indicar"]:checked')){show('err-quer-indicar');ok=false;}
+  if(indicacaoAtiva){
+    let iOk=true;
+    document.querySelectorAll('.indicacao-item').forEach(item=>{
+      const n=item.querySelector('input[type="text"]'), t=item.querySelector('input[type="tel"]');
+      if(!n.value.trim()){n.classList.add('error');iOk=false;}else n.classList.remove('error');
+      if(t.value.replace(/\D/g,'').length<10){t.classList.add('error');iOk=false;}else t.classList.remove('error');
+    });
+    if(!iOk){show('err-indicacoes');ok=false;}else hide('err-indicacoes');
+  }
+  if(!ok) return;
+
+  const inds=[];
+  document.querySelectorAll('.indicacao-item').forEach((item,i)=>{
+    const n=item.querySelector('input[type="text"]').value;
+    const t=item.querySelector('input[type="tel"]').value;
+    inds.push(`${i+1}. ${n} | ${t}`);
+  });
+  const conhVals=[...document.querySelectorAll('input[name="conheceu"]:checked')].map(c=>c.value);
+  const outroTxt=document.getElementById('outro-texto').value.trim();
+  if(outroTxt){const oi=conhVals.indexOf('Outro');if(oi>=0)conhVals[oi]='Outro: '+outroTxt;}
+
+  const payload={
+    nome:document.getElementById('nome').value.trim(),
+    cpf:document.getElementById('cpf').value,
+    nascimento:document.getElementById('nasc').value,
+    tipoLogradouro:document.getElementById('tipo-logradouro').value,
+    logradouro:document.getElementById('logradouro').value.trim(),
+    numero:document.getElementById('numero').value.trim(),
+    complemento:document.getElementById('complemento').value.trim(),
+    cep:document.getElementById('cep').value,
+    bairro:document.getElementById('bairro').value.trim(),
+    cidade:document.getElementById('cidade').value.trim(),
+    estado:document.getElementById('estado').value,
+    email:document.getElementById('email').value.trim(),
+    telefone:document.getElementById('tel').value,
+    temInstagram:document.querySelector('input[name="tem-insta"]:checked').value,
+    instagram:document.getElementById('instagram').value.trim(),
+    sinal:document.querySelector('input[name="sinal"]:checked').value,
+    nomeSinal:document.getElementById('nome-sinal').value.trim(),
+    comoConheceu:conhVals.join(', '),
+    querIndicar:document.querySelector('input[name="quer-indicar"]:checked').value,
+    indicacoes:inds.join(' | ')
+  };
+
+  const btn=document.getElementById('btn-enviar');
+  btn.disabled=true;
+  show('sending-msg');
+
+  try{
+    await fetch(SCRIPT_URL,{
+      method:'POST', mode:'no-cors',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify(payload)
+    });
+    hide('sending-msg');
+    show('success-msg');
+    btn.style.display='none';
+  }catch(e){
+    hide('sending-msg');
+    btn.disabled=false;
+    alert('Erro ao enviar. Verifique sua conexão e tente novamente.');
+  }
+}
+
+document.getElementById('cpf').addEventListener('input',function(e){
+  let v=e.target.value.replace(/\D/g,'').slice(0,11);
+  v=v.replace(/(\d{3})(\d)/,'$1.$2').replace(/(\d{3})(\d)/,'$1.$2').replace(/(\d{3})(\d{1,2})$/,'$1-$2');
+  e.target.value=v;
+});
+document.getElementById('cep').addEventListener('input',function(e){
+  let v=e.target.value.replace(/\D/g,'').slice(0,8);
+  e.target.value=v.replace(/(\d{5})(\d)/,'$1-$2');
+});
+document.getElementById('tel').addEventListener('input',function(e){
+  let v=e.target.value.replace(/\D/g,'').slice(0,11);
+  v=v.length<=10?v.replace(/(\d{2})(\d{4})(\d{0,4})/,'($1) $2-$3'):v.replace(/(\d{2})(\d{5})(\d{0,4})/,'($1) $2-$3');
+  e.target.value=v.trim().replace(/-$/,'');
+});
+</script>
+</body>
+</html>
